@@ -20,8 +20,12 @@ export const Dice = defineFeature(function(context is Context, id is Id, definit
         annotation { "Name" : "Center point", "Filter" : EntityType.VERTEX, "MaxNumberOfPicks" : 1 }
         definition.centerpoint is Query;
         
-        annotation { "Name": "Scale (Based on D6 side length)"}
+        annotation { "Name": "Scale Type"}
+        definition.ScaleType is ScaleType;
+        
+        annotation { "Name": "Scale"}
         isLength(definition.size, SIZE_BOUNDS);
+        
 
     }
     
@@ -43,8 +47,15 @@ export const Dice = defineFeature(function(context is Context, id is Id, definit
         if(definition.DiceType == DiceType.d4)
         {
             const d4_id = id+"d4";
-            const d4_side = (20/16)*(definition.size);
             
+            var d4_side = 0;
+            if (definition.ScaleType == ScaleType.D6_Scale){
+              d4_side = (20/16)*(definition.size);
+            }
+            if (definition.ScaleType == ScaleType.Side_Length){
+              d4_side = definition.size;   
+            }
+               
             if(definition.D4_Type == D4Type.reg){
                 const numPlanes = 4;
                 var vertex1 = location - (d4_side/2)*vector(1,0,0) - (d4_side/(2*sqrt(3)))*vector(0,1,0);
@@ -151,6 +162,7 @@ export const Dice = defineFeature(function(context is Context, id is Id, definit
         {
             const d6_id = id+"d6";
             var sketchPlane1 = plane(location, vector(0, 0, 1), vector(1, 0, 0));
+            //No need to adjust as D6 is scaled either way by it's side
             const d6_side = definition.size;
             const center = worldToPlane(sketchPlane1, location);
             var keyVector = vector(0, 1);
@@ -179,7 +191,13 @@ export const Dice = defineFeature(function(context is Context, id is Id, definit
             const d8_id = id+"d8";
             var sketchPlane1 = plane(location, vector(0, 0, 1), vector(1, 0, 0));
             const numFaces = 8;
-            const d8_side = (18/16)*definition.size;
+            var d8_side = 0;
+            if (definition.ScaleType == ScaleType.D6_Scale){
+              d8_side = (18/16)*(definition.size);
+            }
+            if (definition.ScaleType == ScaleType.Side_Length){
+              d8_side = definition.size;   
+            }
             const squareSketch = newSketchOnPlane(context, d8_id + "squareSketch", { "sketchPlane" : sketchPlane1 });
             const center = worldToPlane(sketchPlane1, location);
             var keyVector = vector(0, 1);
@@ -223,7 +241,13 @@ export const Dice = defineFeature(function(context is Context, id is Id, definit
         if(definition.DiceType == DiceType.d10)
         {   
             const d10_id = id+"d10";
-            const d10_side = (15/16)*(definition.size);
+            var d10_side = 0;
+            if (definition.ScaleType == ScaleType.D6_Scale){
+              d10_side = (15/16)*(definition.size);
+            }
+            if (definition.ScaleType == ScaleType.Side_Length){
+              d10_side = definition.size;   
+            }
             const d10_overall = (22/16)*definition.size;
             const d10_overlap = (3/15)*d10_side;
             const numFaces = 10;
@@ -292,7 +316,13 @@ export const Dice = defineFeature(function(context is Context, id is Id, definit
             //CONVERT TO: IF D12_Type is reg{}
             if(definition.D12_Type == D12Type.reg){
                
-                const d12_side = (7.5/16)*(definition.size);
+                var d12_side = 0;
+                if (definition.ScaleType == ScaleType.D6_Scale){
+                    d12_side = (7.5/16)*(definition.size);
+                }
+                if (definition.ScaleType == ScaleType.Side_Length){
+                    d12_side = definition.size;   
+                }
                 const pyr_side = (4.236068)*d12_side;
                 const pyr_height = sin(58.282526*degree)*pyr_side;
                 const pyr_magnitude = cos(58.282526*degree)*pyr_side;
@@ -360,8 +390,16 @@ export const Dice = defineFeature(function(context is Context, id is Id, definit
             
             if(definition.D12_Type == D12Type.rhomboid){
                 const rhomb_id = d12_id+"rhomboid";
-                const rhomb_dimension = (9.2/(18*sqrt(2)))*definition.size;
-                print(rhomb_dimension);
+                
+                var rhomb_dimension = 0;
+                if (definition.ScaleType == ScaleType.D6_Scale){
+                    rhomb_dimension = (9.2/(18*sqrt(2)))*definition.size;
+                }
+                if (definition.ScaleType == ScaleType.Side_Length){
+                    rhomb_dimension = definition.size*sqrt(2/6);   
+                }
+                
+                //print(rhomb_dimension);
                //Pyramids (6): points at (+-2,0,0) , (0,+-2,0) , (0,0,+-2)
                 const tips = [
                     vector(0,0,2)*rhomb_dimension+location,
@@ -528,7 +566,13 @@ export const Dice = defineFeature(function(context is Context, id is Id, definit
         if(definition.DiceType == DiceType.d20)
         {
             const d20_id = id+"d20";
-            const d20_side = (13/16)*definition.size;
+            var d20_side = 0;
+            if (definition.ScaleType == ScaleType.D6_Scale){
+                d20_side = (13/16)*(definition.size);
+            }
+            if (definition.ScaleType == ScaleType.Side_Length){
+                d20_side = definition.size;   
+            }
             const mag_20 = 0.850651*d20_side;
             const tipz_d20 = 0.525731*d20_side;
             const middz_d20 = 3.603415*d20_side;
@@ -683,6 +727,13 @@ export enum D12Type
         reg,
         annotation {"Name": "Rhomboid"}
         rhomboid,
+}
+export enum ScaleType
+{
+        annotation {"Name": "D6 Scale"}
+        D6_Scale,
+        annotation {"Name": "Side Length"}
+        Side_Length,
 }
 const SIZE_BOUNDS = 
 {
